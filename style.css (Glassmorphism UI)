@@ -1,0 +1,39 @@
+/* Reset and Base Styles */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body, html { width: 100%; height: 100%; overflow: hidden; }
+
+/* Vanta Background Container */
+#vanta-bg { position: absolute; z-index: -1; width: 100%; height: 100%; }
+
+/* Main Dashboard Layout */
+.dashboard {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; gap: 20px; color: #ffffff; position: relative; z-index: 1;
+}
+.admin-dashboard { justify-content: flex-start; padding-top: 50px; }
+
+h1 { font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; }
+h2 { font-size: 1.5rem; margin-bottom: 10px; text-align: center; }
+
+/* Glassmorphism Cards */
+.card, .table-container {
+  background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 30px;
+  width: 350px; display: flex; flex-direction: column; gap: 15px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.table-container { width: 80%; max-width: 800px; padding: 20px; max-height: 60vh; overflow-y: auto; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+
+/* Inputs & Buttons */
+input { padding: 12px; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.8); color: #333; font-size: 1rem; outline: none; }
+input:focus { background: #ffffff; box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+button { padding: 12px; border-radius: 8px; border: none; background: #4facfe; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s ease; }
+button:hover { background: #00f2fe; }
+
+/* Table Styles */
+table { width: 100%; border-collapse: collapse; color: white; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
+th { font-weight: bold; background: rgba(0,0,0,0.2); }
