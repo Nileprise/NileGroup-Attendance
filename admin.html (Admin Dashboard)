@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="vanta-bg"></div>
+
+  <div class="dashboard admin-dashboard">
+    <h1>Admin Dashboard</h1>
+
+    <div class="controls">
+      <input id="searchInput" placeholder="Search Name..." onkeyup="filterTable()">
+      <input type="date" id="filterDate" onchange="filterTable()">
+      <button onclick="downloadExcel()">Download CSV</button>
+      <button onclick="logout()" style="background: #e74c3c;">Logout</button>
+    </div>
+
+    <div class="table-container">
+      <table width="100%">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.halo.min.js"></script>
+  <script src="halo.js"></script>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="auth.js"></script>
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
