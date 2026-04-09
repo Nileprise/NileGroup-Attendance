@@ -1,0 +1,19 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBI2IulpIuSW43FaCFK-ew-5nxgxFSXjSg",
+  authDomain: "nilegroup-attendance.firebaseapp.com",
+  projectId: "nilegroup-attendance",
+  storageBucket: "nilegroup-attendance.firebasestorage.app",
+  messagingSenderId: "325824892909",
+  appId: "1:325824892909:web:f7209309b2cee416ba61e4",
+  measurementId: "G-63GSGT0VYH"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { auth, db };
