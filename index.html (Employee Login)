@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nile Group Attendance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="vanta-bg"></div>
+
+  <div class="dashboard">
+    <h1>Nile Group Attendance</h1>
+
+    <div class="card">
+      <h2>Employee Login</h2>
+      <input id="email" type="email" placeholder="Email">
+      <input id="password" type="password" placeholder="Password">
+      <button onclick="loginUser()">Login</button>
+    </div>
+
+    <div class="card">
+      <h2>Mark Attendance</h2>
+      <input id="empName" placeholder="Your Name">
+      <button onclick="markAttendance()">Mark Attendance</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.halo.min.js"></script>
+  <script src="halo.js"></script>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="auth.js"></script>
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>
