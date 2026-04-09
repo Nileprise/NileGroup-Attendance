@@ -1,0 +1,102 @@
+import { collection, doc, setDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+
+const OFFICE_LAT = 17.3850;
+const OFFICE_LNG = 78.4867;
+
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+window.markAttendance = async () => {
+  const name = document.getElementById("empName").value;
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please log in first!");
+    return;
+  }
+  if (!name) {
+    alert("Please enter your name!");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const dist = getDistance(lat, lng, OFFICE_LAT, OFFICE_LNG);
+
+    if (dist > 50) {
+      alert("Outside office ❌");
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const docRef = doc(db, "attendance", `${user.uid}_${today}`);
+
+    try {
+      await setDoc(docRef, {
+        name: name,
+        date: today,
+        time: new Date().toLocaleTimeString()
+      });
+      alert("Attendance marked ✅");
+    } catch (error) {
+      alert("Error marking attendance: " + error.message);
+    }
+  }, () => alert("Please enable location services!"));
+};
+
+window.loadAttendanceTable = () => {
+  const table = document.getElementById("tableBody");
+  if (!table) return; 
+
+  onSnapshot(collection(db, "attendance"), (snap) => {
+    table.innerHTML = "";
+    snap.forEach(docSnap => {
+      const r = docSnap.data();
+      table.innerHTML += `<tr><td>${r.name}</td><td>${r.date}</td><td>${r.time}</td></tr>`;
+    });
+  });
+};
+
+window.filterTable = () => {
+  const searchInput = document.getElementById("searchInput").value.toLowerCase();
+  const dateFilter = document.getElementById("filterDate").value;
+  const rows = document.querySelectorAll("#tableBody tr");
+
+  rows.forEach(row => {
+    const name = row.cells[0].textContent.toLowerCase();
+    const date = row.cells[1].textContent;
+    const matchesName = name.includes(searchInput);
+    const matchesDate = dateFilter === "" || date === dateFilter;
+    row.style.display = (matchesName && matchesDate) ? "" : "none";
+  });
+};
+
+window.downloadExcel = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "attendance"));
+    let csv = "Name,Date,Time\n";
+    querySnapshot.forEach(docSnap => {
+      const r = docSnap.data();
+      csv += `${r.name},${r.date},${r.time}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "attendance.csv";
+    a.click();
+  } catch (error) {
+    alert("Error downloading data: " + error.message);
+  }
+};
+
+if (window.location.pathname.includes("admin.html")) {
+  loadAttendanceTable();
+}
