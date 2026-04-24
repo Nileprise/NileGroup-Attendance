@@ -128,7 +128,7 @@
     .leave-num { font-size: 1.8rem; font-weight: 600; color: var(--keka-purple); margin-bottom: 0.2rem;}
     .leave-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;}
 
-    /* Me View (Leave/Attendance/Performance) */
+    /* Me View */
     .donut-container { width: 120px; height: 120px; margin: 1.5rem auto; position: relative; }
     .donut-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
     .donut-ring { fill: transparent; stroke: #f1f5f9; stroke-width: 4; }
@@ -161,11 +161,6 @@
     .profile-banner-info h1 { margin: 0 0 5px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
     .out-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; }
     
-    .profile-contact-bar { background: white; border: 1px solid var(--border); border-top: none; padding: 1rem 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; }
-    .profile-org-bar { background: white; border: 1px solid var(--border); border-top: none; padding: 1.5rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
-    .org-stat { display: flex; flex-direction: column; gap: 0.3rem; }
-    .org-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-    
     .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;}
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; margin-top: 0.5rem;}
     .detail-item { display: flex; flex-direction: column; gap: 0.2rem; }
@@ -187,7 +182,6 @@
       .nav-item.active { border-bottom: 3px solid var(--keka-purple); border-left: none; }
       .home-grid, .profile-grid { grid-template-columns: 1fr; }
       .time-widget-horizontal { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-      .profile-org-bar { grid-template-columns: 1fr 1fr; }
       .perf-split-layout { flex-direction: column; min-height: auto; }
       .perf-filter-pane { border-right: none; border-bottom: 1px solid var(--border); }
       .form-grid { grid-template-columns: 1fr; }
@@ -489,22 +483,23 @@
     </div>
   </div>
 
+
   <script>
     // ==========================================
-    // 1. FIREBASE CONFIGURATION (Placeholder)
+    // 1. FIREBASE CONFIGURATION
     // ==========================================
-    // NOTE: Replace this config object with your actual Firebase Project config.
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "your-app.firebaseapp.com",
-      projectId: "your-app-id",
-      storageBucket: "your-app.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456:web:abcd1234"
+      apiKey: "AIzaSyBI2IulpIuSW43FaCFK-ew-5nxgxFSXjSg",
+      authDomain: "nilegroup-attendance.firebaseapp.com",
+      databaseURL: "https://nilegroup-attendance-default-rtdb.firebaseio.com",
+      projectId: "nilegroup-attendance",
+      storageBucket: "nilegroup-attendance.firebasestorage.app",
+      messagingSenderId: "325824892909",
+      appId: "1:325824892909:web:f7209309b2cee416ba61e4",
+      measurementId: "G-63GSGT0VYH"
     };
-    
-    // Initialize Firebase ONLY if config is provided to avoid crashing the demo UI
-    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+
+    if (typeof firebase !== 'undefined') {
       firebase.initializeApp(firebaseConfig);
       window.onload = function() {
         window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
@@ -513,7 +508,7 @@
         });
       };
     } else {
-      console.warn("Firebase config missing. Using simulated OTP logic.");
+      console.error("Firebase SDK failed to load.");
     }
 
     // ==========================================
@@ -568,8 +563,7 @@
       const num = document.getElementById('signup-mobile').value;
       const phoneNumber = "+91" + num; 
       
-      if (typeof firebase !== 'undefined' && firebase.auth) {
-        // PRODUCTION FIREBASE LOGIC
+      if (typeof firebase !== 'undefined' && window.recaptchaVerifier) {
         firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
           .then((confirmationResult) => {
             window.confirmationResult = confirmationResult;
@@ -582,13 +576,6 @@
             btn.innerText = "Send OTP Verification"; btn.disabled = false;
             if(window.recaptchaVerifier) grecaptcha.reset(window.recaptchaWidgetId);
           });
-      } else {
-        // FALLBACK SIMULATION LOGIC (If Firebase isn't configured yet)
-        setTimeout(() => {
-          document.getElementById('auth-signup-view').style.display = 'none';
-          document.getElementById('auth-otp-view').style.display = 'block';
-          btn.innerText = "Send OTP Verification"; btn.disabled = false;
-        }, 1000);
       }
     }
 
@@ -598,8 +585,7 @@
       const btn = e.target.querySelector('button');
       btn.innerText = "Verifying..."; btn.disabled = true;
 
-      if (typeof firebase !== 'undefined' && firebase.auth && window.confirmationResult) {
-        // PRODUCTION FIREBASE LOGIC
+      if (typeof firebase !== 'undefined' && window.confirmationResult) {
         window.confirmationResult.confirm(code).then((result) => {
           document.getElementById('auth-module').style.display = 'none';
           document.getElementById('onboarding-module').style.display = 'flex';
@@ -608,17 +594,6 @@
           document.getElementById('otp-error').style.display = 'block';
           btn.innerText = "Verify & Create Account"; btn.disabled = false;
         });
-      } else {
-        // FALLBACK SIMULATION LOGIC
-        setTimeout(() => {
-          if(code !== "123456") {
-            document.getElementById('otp-error').style.display = 'block';
-            btn.innerText = "Verify & Create Account"; btn.disabled = false;
-            return;
-          }
-          document.getElementById('auth-module').style.display = 'none';
-          document.getElementById('onboarding-module').style.display = 'flex';
-        }, 800);
       }
     }
 
