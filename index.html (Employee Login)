@@ -282,23 +282,23 @@
 
         <div id="view-full-profile" class="view-section">
           <div class="profile-banner">
-            <div class="profile-banner-avatar">NR</div>
-            <div><h1 style="margin:0 0 5px 0; font-size:1.5rem;">Narapaka Ramadevi <span class="out-badge">OUT</span></h1><p style="margin:0; font-size:0.9rem; opacity:0.9;">Associate, RCM | Hyderabad</p></div>
+            <div class="profile-banner-avatar">NA</div>
+            <div><h1 style="margin:0 0 5px 0; font-size:1.5rem;">Narapaka Ramadevi <span class="out-badge">OUT</span></h1><p style="margin:0; font-size:0.9rem; opacity:0.9;">Business Development Manager | Nalgonda</p></div>
           </div>
           <div class="card" style="margin-top:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
             <div>
               <h3>Primary Details</h3>
               <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Date of Birth</span><span>03 Aug 2002</span></div>
-                <div class="detail-item"><span class="detail-label">Gender</span><span>Female</span></div>
-                <div class="detail-item"><span class="detail-label">Reporting Manager</span><span style="color:var(--keka-purple);">Abdul Raheem Syed</span></div>
+                <div class="detail-item"><span class="detail-label">Date of Birth</span><span>12 May 1994</span></div>
+                <div class="detail-item"><span class="detail-label">Gender</span><span>Male</span></div>
+                <div class="detail-item"><span class="detail-label">Reporting Manager</span><span style="color:var(--keka-purple);">Nalla akhil</span></div>
               </div>
             </div>
             <div>
               <h3>Contact Details</h3>
               <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Personal Email</span><span>narapakaramadevi2002@gmail.com</span></div>
-                <div class="detail-item"><span class="detail-label">Phone</span><span>+91-6305309807</span></div>
+                <div class="detail-item"><span class="detail-label">Personal Email</span><span>akhiln0205@gmail.com</span></div>
+                <div class="detail-item"><span class="detail-label">Phone</span><span>+91-6305379144</span></div>
               </div>
             </div>
           </div>
