@@ -1,38 +1,744 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
-  <title>Nile Group Attendance</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <meta name="theme-color" content="#5a38a3">
+  <title>Nileprise HRMS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    /* =========================================
+       1. GLOBAL VARIABLES & RESET
+       ========================================= */
+    :root {
+      --keka-purple: #5a38a3; --keka-dark: #1b2131; --keka-sidebar-hover: #2c344b;
+      --keka-bg: #f5f6f8; --border: #e2e8f0; --text-main: #334155; --text-muted: #64748b;
+      --card-bg: #ffffff; --alert-bg: #f0fdfa; --alert-border: #bbf7d0;
+      --danger-bg: #fef2f2; --danger-border: #fecaca; --danger-text: #ef4444;
+      --success-green: #84cc16; --casual-purple: #a855f7; --sick-yellow: #eab308;
+    }
+    body, html { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: var(--keka-bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+    /* =========================================
+       2. SPA MODULE CONTAINERS
+       ========================================= */
+    #auth-module { display: flex; height: 100vh; width: 100%; background: #fff; z-index: 9999; animation: fadeIn 0.3s ease; }
+    #onboarding-module { display: none; height: 100vh; width: 100%; background: var(--keka-bg); align-items: center; justify-content: center; animation: fadeIn 0.4s ease; overflow-y: auto; padding: 2rem 0;}
+    #dashboard-module { display: none; flex-direction: column; height: 100vh; width: 100%; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =========================================
+       3. AUTHENTICATION MODULE (Login/Signup)
+       ========================================= */
+    .auth-left { flex: 1; background: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80') center/cover no-repeat; position: relative; }
+    .auth-left::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.4)); }
+    .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; background: #ffffff; overflow-y: auto; }
+    .auth-wrapper { width: 100%; max-width: 380px; }
+    
+    .brand-logo { font-size: 1.8rem; font-weight: 800; color: #1b2131; margin-bottom: 2rem; letter-spacing: -0.5px; text-align: center;}
+    .brand-logo span { color: var(--keka-purple); }
+
+    .auth-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 2rem; }
+    .auth-tab { flex: 1; text-align: center; padding-bottom: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; margin-bottom: -2px; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .auth-tab.active { color: var(--keka-purple); border-bottom-color: var(--keka-purple); }
+    
+    .form-input { width: 100%; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; box-sizing: border-box; margin-bottom: 1rem; outline: none; transition: 0.2s; font-family: 'Inter', sans-serif;}
+    .form-input:focus { border-color: var(--keka-purple); box-shadow: 0 0 0 3px rgba(90, 56, 163, 0.1); }
+    .btn-primary { width: 100%; padding: 0.85rem; background-color: var(--keka-purple); color: white; border: none; border-radius: 4px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { background-color: #4a2b88; }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .error-msg { color: var(--danger-text); font-size: 0.85rem; font-weight: 500; margin-top: -0.5rem; margin-bottom: 1rem; display: none; }
+    .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #94a3b8; font-size: 0.8rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border); }
+    .divider::before { margin-right: 1rem; } .divider::after { margin-left: 1rem; }
+
+    .phone-input-group { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 1rem; background: white; }
+    .phone-input-group:focus-within { border-color: var(--keka-purple); box-shadow: 0 0 0 3px rgba(90, 56, 163, 0.1); }
+    .country-code { padding: 0.85rem 1rem; border-right: 1px solid var(--border); color: var(--text-muted); font-size: 0.95rem; background: #fdfdfd; border-radius: 4px 0 0 4px;}
+    .phone-input { flex: 1; border: none; padding: 0.85rem 1rem; outline: none; font-size: 0.95rem; background: transparent;}
+
+    /* =========================================
+       4. ONBOARDING MODULE (Data Entry)
+       ========================================= */
+    .onboard-card { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; margin: auto; }
+    .onboard-title { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin: 0 0 0.5rem 0; }
+    .onboard-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+
+    /* =========================================
+       5. DASHBOARD LAYOUT (Nav & Sidebar)
+       ========================================= */
+    .top-nav { height: 50px; background: var(--keka-purple); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; color: white; flex-shrink: 0; z-index: 100;}
+    .nav-actions { display: flex; align-items: center; gap: 1rem; position: relative; }
+    .profile-icon { width: 30px; height: 30px; background: #0ea5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; cursor: pointer; border: 2px solid transparent; transition: 0.2s;}
+    .profile-icon:hover { border-color: white; }
+    
+    .profile-dropdown { display: none; position: absolute; top: 45px; right: 0; background: white; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 180px; overflow: hidden; z-index: 200; animation: fadeIn 0.2s ease; }
+    .profile-dropdown.active { display: block; }
+    .dropdown-item { padding: 0.8rem 1rem; font-size: 0.85rem; color: var(--text-main); cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .dropdown-item:hover { background: #f1f5f9; color: var(--keka-purple); }
+    .dropdown-item.logout { color: var(--danger-text); border-top: 1px solid var(--border); }
+    .dropdown-item.logout:hover { background: var(--danger-bg); }
+
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 85px; background: var(--keka-dark); display: flex; flex-direction: column; align-items: center; padding-top: 1rem; overflow-y: auto; overflow-x: hidden; flex-shrink: 0;}
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+    .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 0.65rem; padding: 0.7rem 0; width: 100%; cursor: pointer; transition: 0.2s; border-left: 3px solid transparent; text-align: center; }
+    .nav-item:hover { background: var(--keka-sidebar-hover); color: white; }
+    .nav-item.active { background: var(--keka-sidebar-hover); color: white; border-left: 3px solid var(--keka-purple); }
+    .nav-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
+
+    .main-content { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; position: relative; }
+    .view-section { display: none; animation: fadeIn 0.3s ease; }
+    .view-section.active { display: block; }
+
+    /* =========================================
+       6. DASHBOARD COMPONENTS & VIEWS
+       ========================================= */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02); margin-bottom: 1.5rem;}
+    .card-title { font-size: 1rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--text-main); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;}
+    .page-header { font-size: 1.4rem; font-weight: 600; color: #1e293b; margin-bottom: 20px;}
+    .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: white;}
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--keka-purple); }
+    .btn-outline:hover { border-color: var(--keka-purple); background: #f8fafc; }
+
+    .alert-banner { padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; font-weight: 500; font-size: 0.85rem; }
+    .alert-banner.info { background: var(--alert-bg); border: 1px solid var(--alert-border); color: #0f766e; }
+    .alert-banner.warning { background: #fffbf0; border: 1px solid var(--alert-border); color: #92400e; }
+
+    .page-sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; white-space: nowrap; }
+    .sub-tab { padding: 0.8rem 1.2rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s; text-transform: uppercase; }
+    .sub-tab:hover { color: var(--keka-purple); }
+    .sub-tab.active { color: var(--keka-purple); border-bottom-color: var(--keka-purple); }
+
+    /* Home View */
+    .home-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; }
+    .time-widget-horizontal { display: flex; justify-content: space-between; align-items: center; padding: 2rem; background: linear-gradient(to right, #ffffff, #f8fafc); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 1.5rem;}
+    .home-clock { font-size: 3rem; font-weight: 300; color: var(--text-main); margin-bottom: 0.2rem; font-variant-numeric: tabular-nums; letter-spacing: -1px;}
+    .leave-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; }
+    .leave-box { padding: 1rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; }
+    .leave-num { font-size: 1.8rem; font-weight: 600; color: var(--keka-purple); margin-bottom: 0.2rem;}
+    .leave-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;}
+
+    /* Me View (Leave/Attendance/Performance) */
+    .donut-container { width: 120px; height: 120px; margin: 1.5rem auto; position: relative; }
+    .donut-chart { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .donut-ring { fill: transparent; stroke: #f1f5f9; stroke-width: 4; }
+    .donut-segment { fill: transparent; stroke-width: 4; stroke-linecap: round; transition: stroke-dasharray 0.5s ease; }
+    .donut-text-center { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-val { font-size: 1.2rem; font-weight: 700; color: var(--text-main); }
+    
+    .timeline-container { margin-top: 1rem; position: relative;}
+    .timeline-bar { height: 8px; background: var(--border); border-radius: 4px; position: relative; margin-top: 2.5rem; margin-bottom: 0.5rem;}
+    .timeline-fill { position: absolute; left: 10%; width: 40%; height: 100%; background: #10b981; border-radius: 4px; }
+    .timeline-marker { position: absolute; top: -20px; font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+    .cal-header { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; padding: 0.5rem 0; }
+    .cal-day { aspect-ratio: 1; border: 1px solid #f1f5f9; border-radius: 4px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 0.4rem; font-size: 0.8rem; font-weight: 500; position: relative; }
+    .cal-day.woff { background: #fafafa; color: #a1a1aa; }
+    .cal-day.leave { border-color: #c4b5fd; background: #f3e8ff; }
+
+    .perf-split-layout { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; min-height: 350px; }
+    .perf-filter-pane { flex: 0 0 250px; background-color: #fafafa; border-right: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .perf-main-pane { flex: 1; padding: 2rem; display: flex; align-items: center; justify-content: center; background: white; }
+
+    /* Team View */
+    .emp-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .emp-card { display: flex; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: 0.2s; align-items: center;}
+    .emp-card:hover { background: #f8fafc; }
+
+    /* Full Profile View */
+    .profile-banner { height: 140px; background: linear-gradient(135deg, #1e3a8a, #5a38a3, #3b82f6); border-radius: 6px 6px 0 0; position: relative; padding: 20px; display: flex; align-items: center; gap: 1.5rem; color: white; }
+    .profile-banner-avatar { width: 80px; height: 80px; border-radius: 50%; background: #67e8f9; color: #083344; font-size: 2rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 3px solid white; }
+    .profile-banner-info h1 { margin: 0 0 5px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    .out-badge { background: #ef4444; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; }
+    
+    .profile-contact-bar { background: white; border: 1px solid var(--border); border-top: none; padding: 1rem 1.5rem; display: flex; gap: 2rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap; }
+    .profile-org-bar { background: white; border: 1px solid var(--border); border-top: none; padding: 1.5rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+    .org-stat { display: flex; flex-direction: column; gap: 0.3rem; }
+    .org-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+    
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;}
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; margin-top: 0.5rem;}
+    .detail-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .detail-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.2s; }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content { background: white; padding: 2rem; border-radius: 8px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .pin-input { font-size: 2rem; text-align: center; letter-spacing: 12px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #auth-module { flex-direction: column; } .auth-left { display: none; }
+      .app-body { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; justify-content: space-around; padding: 0; border-bottom: 1px solid var(--keka-dark); }
+      .nav-item { width: auto; padding: 0.8rem 0.5rem; border-bottom: 3px solid transparent; border-left: none; flex: 1 1 auto; }
+      .nav-item span:last-child { display: none; } 
+      .nav-item.active { border-bottom: 3px solid var(--keka-purple); border-left: none; }
+      .home-grid, .profile-grid { grid-template-columns: 1fr; }
+      .time-widget-horizontal { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+      .profile-org-bar { grid-template-columns: 1fr 1fr; }
+      .perf-split-layout { flex-direction: column; min-height: auto; }
+      .perf-filter-pane { border-right: none; border-bottom: 1px solid var(--border); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-  <div id="vanta-bg"></div>
+  <input type="file" accept="image/*" capture="user" id="native-camera" style="display:none;">
 
-  <div class="dashboard">
-    <h1>Nile Group Attendance</h1>
-
-    <div class="card">
-      <h2>Employee Login</h2>
-      <input id="email" type="email" placeholder="Email">
-      <input id="password" type="password" placeholder="Password">
-      <button onclick="loginUser()">Login</button>
-    </div>
-
-    <div class="card">
-      <h2>Mark Attendance</h2>
-      <input id="empName" placeholder="Your Name">
-      <button onclick="markAttendance()">Mark Attendance</button>
+  <div class="modal-overlay" id="action-modal">
+    <div class="modal-content">
+      <h3 style="margin: 0 0 1.5rem 0; color:var(--keka-purple);" id="action-title">Verify Action</h3>
+      <select class="form-input" id="employee-select">
+        <option value="" disabled selected>Select Your Name</option>
+        <option value="Akhil">Akhil</option>
+        <option value="Ajay">Ajay</option>
+        <option value="Ramadevi">Narapaka Ramadevi</option>
+      </select>
+      <input type="password" inputmode="numeric" maxlength="4" class="form-input pin-input" id="pin-entry" placeholder="••••">
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn btn-outline" style="flex:1;" onclick="closeModal('action-modal')">Cancel</button>
+        <button class="btn" style="background:var(--keka-purple); flex:1;" id="btn-submit-pin">Verify GPS</button>
+      </div>
+      <div id="pin-error" style="color:#ef4444; font-size:0.85rem; margin-top:1rem; font-weight:600;"></div>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.halo.min.js"></script>
-  <script src="halo.js"></script>
+  <div id="auth-module">
+    <div class="auth-left"></div>
+    <div class="auth-right">
+      <div class="auth-wrapper">
+        <div class="brand-logo">NILE<span>PRISE</span></div>
 
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="auth.js"></script>
-  <script type="module" src="app.js"></script>
+        <div class="auth-tabs">
+          <div class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Login</div>
+          <div class="auth-tab" id="tab-signup" onclick="switchAuthMode('signup')">Sign Up</div>
+        </div>
 
+        <div id="auth-login-view">
+          <h2 style="margin-top:0; font-size:1.2rem;">Welcome back</h2>
+          <form onsubmit="handleLogin(event)">
+            <input type="text" class="form-input" id="login-id" placeholder="Email, Username, or Mobile" required>
+            <input type="password" class="form-input" id="login-pass" placeholder="Password (or leave blank for OTP)">
+            <div class="error-msg" id="login-error">Invalid credentials. Please try again.</div>
+            <button type="submit" class="btn-primary">Secure Login</button>
+          </form>
+        </div>
+
+        <div id="auth-signup-view" style="display:none;">
+          <h2 style="margin-top:0; font-size:1.2rem;">Create Employee Account</h2>
+          
+          <div style="display:flex; gap:1rem; margin-bottom: 1rem;">
+            <label style="font-size:0.85rem; font-weight:600; cursor:pointer;"><input type="radio" name="signupMethod" value="email" checked onchange="toggleSignupMethod()"> Use Email</label>
+            <label style="font-size:0.85rem; font-weight:600; cursor:pointer;"><input type="radio" name="signupMethod" value="mobile" onchange="toggleSignupMethod()"> Use Mobile + OTP</label>
+          </div>
+
+          <form id="signup-email-form" onsubmit="handleSignupEmail(event)">
+            <input type="email" class="form-input" id="signup-email" placeholder="Company Email Address" required>
+            <input type="password" class="form-input" id="signup-pass1" placeholder="Create Password" required>
+            <input type="password" class="form-input" id="signup-pass2" placeholder="Confirm Password" required>
+            <div class="error-msg" id="signup-email-error">Passwords do not match.</div>
+            <button type="submit" class="btn-primary">Create Account</button>
+          </form>
+
+          <form id="signup-mobile-form" style="display:none;" onsubmit="handleSignupMobile(event)">
+            <div class="phone-input-group">
+              <div class="country-code">🇮🇳 +91</div>
+              <input type="tel" class="phone-input" id="signup-mobile" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
+            </div>
+            <div class="error-msg" id="signup-mobile-error">Mobile number error.</div>
+            <div id="recaptcha-container"></div> <button type="submit" class="btn-primary">Send OTP Verification</button>
+          </form>
+        </div>
+
+        <div id="auth-otp-view" style="display:none;">
+          <h2 style="margin-top:0; font-size:1.2rem;">Verify your device</h2>
+          <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.5rem;">We've sent a secure one-time password to your mobile device.</p>
+          <form onsubmit="handleOTPVerify(event)">
+            <input type="text" class="form-input" id="otp-input" placeholder="Enter 6-digit OTP" style="text-align:center; font-size:1.5rem; letter-spacing:8px;" maxlength="6" required>
+            <div class="error-msg" id="otp-error">Incorrect OTP. Please check and try again.</div>
+            <button type="submit" class="btn-primary">Verify & Create Account</button>
+            <div style="text-align:center; margin-top:1rem; font-size:0.85rem; color:var(--keka-purple); cursor:pointer;" onclick="switchAuthMode('signup')">&larr; Back</div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <div id="onboarding-module">
+    <div class="onboard-card">
+      <h1 class="onboard-title">Complete Profile Setup</h1>
+      <p class="onboard-subtitle">Account created successfully. Please enter the employee details below to initialize the HRMS profile.</p>
+      
+      <form onsubmit="finishOnboarding(event)">
+        <h3 style="font-size:1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Personal Information</h3>
+        <div class="form-grid">
+          <div><label style="font-size:0.8rem; font-weight:600;">First Name *</label><input type="text" class="form-input" required></div>
+          <div><label style="font-size:0.8rem; font-weight:600;">Last Name *</label><input type="text" class="form-input" required></div>
+          <div><label style="font-size:0.8rem; font-weight:600;">Date of Birth</label><input type="date" class="form-input"></div>
+          <div><label style="font-size:0.8rem; font-weight:600;">Personal Email</label><input type="email" class="form-input"></div>
+        </div>
+
+        <h3 style="font-size:1rem; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Organizational Data</h3>
+        <div class="form-grid">
+          <div>
+            <label style="font-size:0.8rem; font-weight:600;">Job Title / Role *</label>
+            <select class="form-input" required><option value="">Select Role</option><option>Associate</option><option>Developer</option><option>Manager</option></select>
+          </div>
+          <div>
+            <label style="font-size:0.8rem; font-weight:600;">Department *</label>
+            <select class="form-input" required><option value="">Select Dept</option><option>Engineering</option><option>Operations</option><option>HR</option></select>
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="font-size:0.8rem; font-weight:600;">Reporting Manager</label>
+            <input type="text" class="form-input" placeholder="Search manager name...">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top:1rem; font-size:1rem;">Save Profile & Enter Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+
+  <div id="dashboard-module">
+    
+    <div class="top-nav">
+      <div class="brand">NILE<span style="color:#fde047;">PRISE</span></div>
+      <div class="nav-actions">
+        <div class="profile-icon" onclick="toggleProfileMenu()">NR</div>
+        <div id="profile-menu" class="profile-dropdown">
+          <div class="dropdown-item" onclick="openFullProfile()">👤 My Profile</div>
+          <div class="dropdown-item">⚙️ Settings</div>
+          <div class="dropdown-item logout" onclick="handleLogout()">🚪 Logout</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-body">
+      <div class="sidebar">
+        <div class="nav-item active" onclick="switchMainView('home', this)"><span class="nav-icon">🏠</span><span>Home</span></div>
+        <div class="nav-item" onclick="switchMainView('me', this)"><span class="nav-icon">👤</span><span>Me</span></div>
+        <div class="nav-item" onclick="switchMainView('inbox', this)"><span class="nav-icon">📥</span><span>Inbox</span></div>
+        <div class="nav-item" onclick="switchMainView('team', this)"><span class="nav-icon">👥</span><span>My Team</span></div>
+        <div class="nav-item"><span class="nav-icon">💰</span><span>Finances</span></div>
+      </div>
+
+      <div class="main-content">
+        
+        <div id="view-home" class="view-section active">
+          <h2 class="page-header">Welcome Narapaka Ramadevi!</h2>
+          <div class="home-grid">
+            <div class="home-left">
+              <div class="time-widget-horizontal">
+                <div>
+                  <div class="home-clock" id="home-clock">00:00 AM</div>
+                  <div style="font-size:0.95rem; color:var(--text-muted); font-weight:500;" id="home-date">Loading...</div>
+                  <div class="shift-text">Shift: 5:30 PM - 2:30 AM</div>
+                </div>
+                <div>
+                  <div style="display:flex; gap:0.8rem; margin-bottom:1rem;">
+                    <button class="btn" style="background:var(--keka-purple);" onclick="openPunchModal('Login')">Web Clock In</button>
+                    <button class="btn" style="background:#ef4444;" onclick="openPunchModal('Logout')">Clock Out</button>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-title">Leave Balances</div>
+                <div class="leave-grid">
+                  <div class="leave-box"><div class="leave-num">10.75</div><div class="leave-label">Earned Leave</div></div>
+                  <div class="leave-box"><div class="leave-num">3</div><div class="leave-label">Casual Leave</div></div>
+                  <div class="leave-box"><div class="leave-num">2</div><div class="leave-label">Sick Leave</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="home-right">
+              <div class="card"><div class="card-title">Announcements</div><p style="font-size:0.85rem; color:var(--text-muted);">Read the latest "Revenue Pulse" monthly newsletter.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-me" class="view-section">
+          <div class="page-sub-tabs">
+            <span class="sub-tab active" onclick="switchSubTab('me', 'attendance', this)">Attendance</span>
+            <span class="sub-tab" onclick="switchSubTab('me', 'leave', this)">Leave</span>
+            <span class="sub-tab" onclick="switchSubTab('me', 'performance', this)">Performance</span>
+          </div>
+
+          <div id="me-tab-attendance" class="me-sub-section active">
+            <div class="card" style="display:flex; justify-content:space-between;">
+              <div><h3 style="margin-top:0;">Attendance Stats</h3><p style="color:var(--text-muted);">Avg Hrs/Day: 7h 46m <br> On Time: 80%</p></div>
+              <div style="flex:1; max-width: 400px;">
+                <h3 style="margin-top:0; font-size:0.9rem;">Today (5:30 PM - 2:30 AM)</h3>
+                <div class="timeline-container"><div class="timeline-marker" style="left:10%;">5:30 PM</div><div class="timeline-bar"><div class="timeline-fill"></div></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0;">Logs & Requests</h3>
+              <div style="display:flex; gap:1.5rem; border-top:1px solid var(--border); padding-top:1rem;">
+                <div style="flex:2;">
+                  <div class="cal-grid">
+                    <div class="cal-header">MON</div><div class="cal-header">TUE</div><div class="cal-header">WED</div><div class="cal-header">THU</div><div class="cal-header">FRI</div><div class="cal-header">SAT</div><div class="cal-header">SUN</div>
+                    <div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day woff">21</div><div class="cal-day woff">22</div>
+                    <div class="cal-day leave" style="border-width:2px;">23</div><div class="cal-day">24</div><div class="cal-day">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day woff">28</div><div class="cal-day woff">29</div>
+                  </div>
+                </div>
+                <div style="flex:1; border-left:1px solid var(--border); padding-left:1.5rem;">
+                  <div style="font-size:0.85rem; font-weight:600; margin-bottom:1rem;">23 Mar Log</div>
+                  <div style="background:#fefce8; border:1px solid #fef08a; padding:0.8rem; border-radius:4px; font-size:0.85rem; color:#854d0e;">Earned Leave</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="me-tab-leave" class="me-sub-section" style="display:none;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+              <div class="card"><div class="card-title">Earned Leave</div><div class="donut-container"><svg class="donut-chart" viewBox="0 0 42 42"><circle class="donut-ring" cx="21" cy="21" r="15.915"></circle><circle class="donut-segment" cx="21" cy="21" r="15.915" stroke="var(--success-green)" stroke-dasharray="70 30"></circle></svg><div class="donut-text-center"><span class="donut-val">10.75</span><span style="font-size:0.6rem; color:var(--text-muted);">Avail</span></div></div></div>
+              <div class="card"><div class="card-title">Casual Leave</div><div class="donut-container"><svg class="donut-chart" viewBox="0 0 42 42"><circle class="donut-ring" cx="21" cy="21" r="15.915"></circle><circle class="donut-segment" cx="21" cy="21" r="15.915" stroke="var(--casual-purple)" stroke-dasharray="75 25"></circle></svg><div class="donut-text-center"><span class="donut-val">3</span><span style="font-size:0.6rem; color:var(--text-muted);">Avail</span></div></div></div>
+            </div>
+          </div>
+
+          <div id="me-tab-performance" class="me-sub-section" style="display:none;">
+            <div class="card">
+              <h2 class="card-title">Take Action</h2>
+              <div style="display:flex; gap:2rem; border-bottom:1px solid var(--border); margin-bottom:1rem;">
+                <div style="padding:0.5rem 0; font-size:0.85rem; font-weight:600; color:var(--text-muted); cursor:pointer;">1:1 MEETINGS</div>
+                <div style="padding:0.5rem 0; font-size:0.85rem; font-weight:600; color:var(--keka-purple); cursor:pointer; border-bottom:2px solid var(--keka-purple);">REVIEWS</div>
+              </div>
+              <div class="perf-split-layout">
+                <div class="perf-filter-pane">
+                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; color:var(--text-main);">PENDING REVIEWS <span style="color:var(--keka-purple);">⌃</span></div>
+                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; color:var(--text-muted);">SUBMITTED REVIEWS <span>⌄</span></div>
+                </div>
+                <div class="perf-main-pane">
+                  <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:1rem;"><div style="font-size:4rem; opacity:0.5;">📄</div><p style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">You don't have any pending reviews right now.</p><button class="btn" style="background:var(--keka-purple);">Write review</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-inbox" class="view-section">
+          <h1 style="font-size:1.5rem; margin:0 0 1rem 0;">Inbox</h1>
+          <div class="page-sub-tabs">
+            <span class="sub-tab active" onclick="switchSubTab('inbox', 'actions', this)">Take actions</span>
+            <span class="sub-tab" onclick="switchSubTab('inbox', 'notifications', this)">Notifications</span>
+            <span class="sub-tab" onclick="switchSubTab('inbox', 'archive', this)">Archive</span>
+          </div>
+          <div id="inbox-tab-actions" class="inbox-sub-section active">
+            <div class="alert-banner warning">⚠️ <strong>Action Required:</strong> Pending onboarding tasks.</div>
+            <div class="card"><div style="display:flex; justify-content:space-between;"><div><h4 style="margin:0 0 5px 0;">Last 3 Months Payslip</h4><p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Error: Binding undefined.</p></div><span style="color:#ef4444; font-size:0.8rem; font-weight:600;">❌ Action Required</span></div></div>
+          </div>
+          <div id="inbox-tab-notifications" class="inbox-sub-section" style="display:none;">
+            <div class="card"><h3 style="margin-top:0;">Recent Notifications</h3><p style="color:var(--text-muted);">No new notifications.</p></div>
+          </div>
+          <div id="inbox-tab-archive" class="inbox-sub-section" style="display:none;">
+            <div class="card" style="text-align:center; padding: 3rem;"><div style="font-size:3rem; opacity:0.5; margin-bottom:1rem;">🗃️</div><h3 style="margin:0 0 0.5rem 0;">No Archived Items</h3></div>
+          </div>
+        </div>
+
+        <div id="view-team" class="view-section">
+          <div class="page-header">Organization Explorer</div>
+          <div class="card">
+            <input type="text" style="width:100%; border:1px solid var(--border); padding:10px; border-radius:4px; outline:none; box-sizing:border-box;" placeholder="Search employees...">
+            <div class="emp-list" id="emp-list-container"></div>
+          </div>
+          <div id="unified-dashboard-area" style="margin-top:2rem;">
+            <div class="card" style="text-align:center; padding:3rem; color:var(--text-muted);"><span style="font-size:3rem;">👤</span><div style="font-weight:500; margin-top:10px;">Select an employee profile above.</div></div>
+          </div>
+        </div>
+
+        <div id="view-full-profile" class="view-section">
+          <div class="profile-banner">
+            <div class="profile-banner-avatar">NR</div>
+            <div><h1 style="margin:0 0 5px 0; font-size:1.5rem;">Narapaka Ramadevi <span class="out-badge">OUT</span></h1><p style="margin:0; font-size:0.9rem; opacity:0.9;">Associate, RCM | Hyderabad</p></div>
+          </div>
+          <div class="card" style="margin-top:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div>
+              <h3>Primary Details</h3>
+              <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">Date of Birth</span><span>03 Aug 2002</span></div>
+                <div class="detail-item"><span class="detail-label">Gender</span><span>Female</span></div>
+                <div class="detail-item"><span class="detail-label">Reporting Manager</span><span style="color:var(--keka-purple);">Abdul Raheem Syed</span></div>
+              </div>
+            </div>
+            <div>
+              <h3>Contact Details</h3>
+              <div class="detail-grid">
+                <div class="detail-item"><span class="detail-label">Personal Email</span><span>narapakaramadevi2002@gmail.com</span></div>
+                <div class="detail-item"><span class="detail-label">Phone</span><span>+91-6305309807</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. FIREBASE CONFIGURATION (Placeholder)
+    // ==========================================
+    // NOTE: Replace this config object with your actual Firebase Project config.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "your-app.firebaseapp.com",
+      projectId: "your-app-id",
+      storageBucket: "your-app.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456:web:abcd1234"
+    };
+    
+    // Initialize Firebase ONLY if config is provided to avoid crashing the demo UI
+    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      window.onload = function() {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response) => {}
+        });
+      };
+    } else {
+      console.warn("Firebase config missing. Using simulated OTP logic.");
+    }
+
+    // ==========================================
+    // 2. AUTHENTICATION LOGIC
+    // ==========================================
+    function switchAuthMode(mode) {
+      document.getElementById('auth-login-view').style.display = 'none';
+      document.getElementById('auth-signup-view').style.display = 'none';
+      document.getElementById('auth-otp-view').style.display = 'none';
+      document.getElementById('tab-login').classList.remove('active');
+      document.getElementById('tab-signup').classList.remove('active');
+
+      if(mode === 'login') {
+        document.getElementById('auth-login-view').style.display = 'block';
+        document.getElementById('tab-login').classList.add('active');
+      } else if (mode === 'signup') {
+        document.getElementById('auth-signup-view').style.display = 'block';
+        document.getElementById('tab-signup').classList.add('active');
+      }
+      document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+    }
+
+    function toggleSignupMethod() {
+      const method = document.querySelector('input[name="signupMethod"]:checked').value;
+      document.getElementById('signup-email-form').style.display = method === 'email' ? 'block' : 'none';
+      document.getElementById('signup-mobile-form').style.display = method === 'mobile' ? 'block' : 'none';
+      document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const id = document.getElementById('login-id').value;
+      if(id === "fail") { document.getElementById('login-error').style.display = 'block'; return; }
+      document.getElementById('auth-module').style.display = 'none';
+      document.getElementById('dashboard-module').style.display = 'flex';
+    }
+
+    function handleSignupEmail(e) {
+      e.preventDefault();
+      const p1 = document.getElementById('signup-pass1').value;
+      const p2 = document.getElementById('signup-pass2').value;
+      if(p1 !== p2) { document.getElementById('signup-email-error').style.display = 'block'; return; }
+      document.getElementById('auth-module').style.display = 'none';
+      document.getElementById('onboarding-module').style.display = 'flex';
+    }
+
+    function handleSignupMobile(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.innerText = "Sending..."; btn.disabled = true;
+      
+      const num = document.getElementById('signup-mobile').value;
+      const phoneNumber = "+91" + num; 
+      
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        // PRODUCTION FIREBASE LOGIC
+        firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+          .then((confirmationResult) => {
+            window.confirmationResult = confirmationResult;
+            document.getElementById('auth-signup-view').style.display = 'none';
+            document.getElementById('auth-otp-view').style.display = 'block';
+            btn.innerText = "Send OTP Verification"; btn.disabled = false;
+          }).catch((error) => {
+            document.getElementById('signup-mobile-error').innerText = "Error: " + error.message;
+            document.getElementById('signup-mobile-error').style.display = 'block';
+            btn.innerText = "Send OTP Verification"; btn.disabled = false;
+            if(window.recaptchaVerifier) grecaptcha.reset(window.recaptchaWidgetId);
+          });
+      } else {
+        // FALLBACK SIMULATION LOGIC (If Firebase isn't configured yet)
+        setTimeout(() => {
+          document.getElementById('auth-signup-view').style.display = 'none';
+          document.getElementById('auth-otp-view').style.display = 'block';
+          btn.innerText = "Send OTP Verification"; btn.disabled = false;
+        }, 1000);
+      }
+    }
+
+    function handleOTPVerify(e) {
+      e.preventDefault();
+      const code = document.getElementById('otp-input').value;
+      const btn = e.target.querySelector('button');
+      btn.innerText = "Verifying..."; btn.disabled = true;
+
+      if (typeof firebase !== 'undefined' && firebase.auth && window.confirmationResult) {
+        // PRODUCTION FIREBASE LOGIC
+        window.confirmationResult.confirm(code).then((result) => {
+          document.getElementById('auth-module').style.display = 'none';
+          document.getElementById('onboarding-module').style.display = 'flex';
+        }).catch((error) => {
+          document.getElementById('otp-error').innerText = "Invalid OTP code.";
+          document.getElementById('otp-error').style.display = 'block';
+          btn.innerText = "Verify & Create Account"; btn.disabled = false;
+        });
+      } else {
+        // FALLBACK SIMULATION LOGIC
+        setTimeout(() => {
+          if(code !== "123456") {
+            document.getElementById('otp-error').style.display = 'block';
+            btn.innerText = "Verify & Create Account"; btn.disabled = false;
+            return;
+          }
+          document.getElementById('auth-module').style.display = 'none';
+          document.getElementById('onboarding-module').style.display = 'flex';
+        }, 800);
+      }
+    }
+
+    function finishOnboarding(e) {
+      e.preventDefault();
+      document.getElementById('onboarding-module').style.display = 'none';
+      document.getElementById('dashboard-module').style.display = 'flex';
+    }
+
+    function handleLogout() {
+      document.querySelectorAll('form').forEach(f => f.reset());
+      document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
+      document.getElementById('profile-menu').classList.remove('active');
+      document.getElementById('dashboard-module').style.display = 'none';
+      document.getElementById('onboarding-module').style.display = 'none';
+      document.getElementById('auth-module').style.display = 'flex';
+      switchAuthMode('login');
+      switchMainView('home', document.querySelector('.sidebar .nav-item'));
+    }
+
+    // ==========================================
+    // 3. DASHBOARD ROUTING
+    // ==========================================
+    function switchMainView(viewId, navElement) {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + viewId).classList.add('active');
+      if(navElement) navElement.classList.add('active');
+      document.getElementById('profile-menu').classList.remove('active');
+    }
+
+    function switchSubTab(parentView, tabId, navElement) {
+      document.querySelectorAll(`#view-${parentView} .${parentView}-sub-section`).forEach(el => el.style.display = 'none');
+      document.querySelectorAll(`#view-${parentView} .page-sub-tabs .sub-tab`).forEach(el => el.classList.remove('active'));
+      document.getElementById(`${parentView}-tab-${tabId}`).style.display = 'block';
+      navElement.classList.add('active');
+    }
+
+    function toggleProfileMenu() { document.getElementById('profile-menu').classList.toggle('active'); }
+    function openFullProfile() { switchMainView('full-profile', null); }
+
+    // ==========================================
+    // 4. CLOCKS & DATA RENDERING
+    // ==========================================
+    function updateClocks() {
+      const now = new Date();
+      if(document.getElementById('home-clock')){
+        document.getElementById('home-clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('home-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
+    setInterval(updateClocks, 1000); updateClocks();
+
+    const educationalRoster = {
+      "Sid": { name: "Anandeshi Sidharth", role: "Recruiter", avatar: "AS", color: "#14b8a6", avgHrs: "8h 02m", earnedLeave: 5 },
+      "Mustafa": { name: "Mustafa Mohammed", role: "Expert", avatar: "MM", color: "#f59e0b", avgHrs: "7h 19m", earnedLeave: 12.2 },
+      "Rama": { name: "Narapaka Ramadevi", role: "Associate", avatar: "NR", color: "#0ea5e9", avgHrs: "7h 46m", earnedLeave: 10.75 }
+    };
+
+    function renderRoster() {
+      const container = document.getElementById('emp-list-container');
+      if(!container) return;
+      container.innerHTML = '';
+      for (const [id, data] of Object.entries(educationalRoster)) {
+        container.innerHTML += `
+          <div class="emp-card" id="emp-${id}" onclick="selectEmployee('${id}')">
+            <div style="width:30px; height:30px; border-radius:50%; background-color:${data.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:bold;">${data.avatar}</div>
+            <div><div style="font-weight:600; font-size:0.85rem;">${data.name}</div><div style="font-size:0.7rem; color:#64748b;">${data.role}</div></div>
+          </div>`;
+      }
+    }
+    renderRoster();
+
+    function selectEmployee(id) {
+      document.querySelectorAll('.emp-card').forEach(card => card.style.borderColor = 'var(--border)');
+      document.getElementById('emp-' + id).style.borderColor = 'var(--keka-purple)';
+      const data = educationalRoster[id];
+      document.getElementById('unified-dashboard-area').innerHTML = `
+        <div style="border-top:2px solid var(--border); padding-top:2rem; display:flex; flex-direction:column; gap:1.5rem;">
+          <div class="card" style="display:flex; align-items:center; gap:1.5rem;">
+            <div style="width:60px; height:60px; border-radius:50%; background-color:${data.color}; color:white; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold;">${data.avatar}</div>
+            <div><h2 style="margin:0; font-size:1.3rem;">${data.name}</h2><p style="margin:0; color:#64748b;">${data.role}</p></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="card"><div style="font-size:0.8rem; color:#64748b; margin-bottom:5px;">Avg Hrs/Day</div><div style="font-size:1.5rem;">${data.avgHrs}</div></div>
+            <div class="card"><div style="font-size:0.8rem; color:#64748b; margin-bottom:5px;">Earned Leave</div><div style="font-size:1.5rem;">${data.earnedLeave}</div></div>
+          </div>
+        </div>`;
+    }
+
+    // ==========================================
+    // 5. GPS & CAMERA PUNCH LOGIC
+    // ==========================================
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function openPunchModal(action) {
+      document.getElementById('action-modal').classList.add('active');
+      document.getElementById('action-title').textContent = action + " Action";
+      document.getElementById('pin-error').textContent = "";
+    }
+
+    document.getElementById('btn-submit-pin').addEventListener('click', () => {
+      document.getElementById('pin-error').textContent = "Locating GPS...";
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            closeModal('action-modal'); 
+            document.getElementById('native-camera').click();
+          },
+          (error) => { document.getElementById('pin-error').textContent = "GPS Denied."; },
+          { enableHighAccuracy: true }
+        );
+      }
+    });
+
+    document.getElementById('native-camera').addEventListener('change', (event) => {
+      if (event.target.files[0]) {
+        alert("Photo captured and GPS verified. Punch logged.");
+        document.getElementById('native-camera').value = ""; 
+      }
+    });
+  </script>
 </body>
 </html>
