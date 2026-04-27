@@ -1,14 +1,17 @@
+Here is the complete, modular **`index.html`** file. This contains only the structural HTML, which links to your separated CSS (`styles.css`) and JavaScript (`app.js`) files for your GitHub repository.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <meta name="theme-color" content="#5a38a3">
-  <title>NILEGROUP HRMS</title>
+  <title>Nileprise HRMS</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="./styles.css">
   
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,9 +25,9 @@
       <h3 style="margin: 0 0 1.5rem 0; color:var(--keka-purple);" id="action-title">Verify Action</h3>
       <select class="form-input" id="employee-select">
         <option value="" disabled selected>Select Your Name</option>
-        <option value="Akhil">Nalla Akhil</option>
+        <option value="Akhil">Akhil</option>
         <option value="Ajay">Ajay</option>
-        <option value="Fayaz">MA Fayaz</option>
+        <option value="Ramadevi">Narapaka Ramadevi</option>
       </select>
       <input type="password" inputmode="numeric" maxlength="4" class="form-input pin-input" id="pin-entry" placeholder="••••">
       <div style="display:flex; gap:0.5rem;">
@@ -39,7 +42,7 @@
     <div class="auth-left"></div>
     <div class="auth-right">
       <div class="auth-wrapper">
-        <div class="brand-logo">NILE<span>GROUP</span></div>
+        <div class="brand-logo">NILE<span>PRISE</span></div>
 
         <div class="auth-tabs">
           <div class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Login</div>
@@ -116,11 +119,21 @@
         <div class="form-grid">
           <div>
             <label style="font-size:0.8rem; font-weight:600;">Job Title / Role *</label>
-            <select class="form-input" required><option value="">Select Role</option><option>Associate</option><option>Developer</option><option>Manager</option></select>
+            <select class="form-input" required>
+              <option value="">Select Role</option>
+              <option>Associate</option>
+              <option>Developer</option>
+              <option>Manager</option>
+            </select>
           </div>
           <div>
             <label style="font-size:0.8rem; font-weight:600;">Department *</label>
-            <select class="form-input" required><option value="">Select Dept</option><option>Engineering</option><option>Operations</option><option>HR</option></select>
+            <select class="form-input" required>
+              <option value="">Select Dept</option>
+              <option>Engineering</option>
+              <option>Operations</option>
+              <option>HR</option>
+            </select>
           </div>
           <div style="grid-column: span 2;">
             <label style="font-size:0.8rem; font-weight:600;">Reporting Manager</label>
@@ -159,7 +172,7 @@
       <div class="main-content">
         
         <div id="view-home" class="view-section active">
-          <h2 class="page-header">Welcome Akhil!</h2>
+          <h2 class="page-header">Welcome Narapaka Ramadevi!</h2>
           <div class="home-grid">
             <div class="home-left">
               <div class="time-widget-horizontal">
@@ -282,23 +295,23 @@
 
         <div id="view-full-profile" class="view-section">
           <div class="profile-banner">
-            <div class="profile-banner-avatar">NA</div>
-            <div><h1 style="margin:0 0 5px 0; font-size:1.5rem;">Narapaka Ramadevi <span class="out-badge">OUT</span></h1><p style="margin:0; font-size:0.9rem; opacity:0.9;">Business Development Manager | Nalgonda</p></div>
+            <div class="profile-banner-avatar">NR</div>
+            <div><h1 style="margin:0 0 5px 0; font-size:1.5rem;">Narapaka Ramadevi <span class="out-badge">OUT</span></h1><p style="margin:0; font-size:0.9rem; opacity:0.9;">Associate, RCM | Hyderabad</p></div>
           </div>
           <div class="card" style="margin-top:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
             <div>
               <h3>Primary Details</h3>
               <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Date of Birth</span><span>12 May 1994</span></div>
-                <div class="detail-item"><span class="detail-label">Gender</span><span>Male</span></div>
-                <div class="detail-item"><span class="detail-label">Reporting Manager</span><span style="color:var(--keka-purple);">Nalla akhil</span></div>
+                <div class="detail-item"><span class="detail-label">Date of Birth</span><span>03 Aug 2002</span></div>
+                <div class="detail-item"><span class="detail-label">Gender</span><span>Female</span></div>
+                <div class="detail-item"><span class="detail-label">Reporting Manager</span><span style="color:var(--keka-purple);">Abdul Raheem Syed</span></div>
               </div>
             </div>
             <div>
               <h3>Contact Details</h3>
               <div class="detail-grid">
-                <div class="detail-item"><span class="detail-label">Personal Email</span><span>akhiln0205@gmail.com</span></div>
-                <div class="detail-item"><span class="detail-label">Phone</span><span>+91-6305379144</span></div>
+                <div class="detail-item"><span class="detail-label">Personal Email</span><span>narapakaramadevi2002@gmail.com</span></div>
+                <div class="detail-item"><span class="detail-label">Phone</span><span>+91-6305309807</span></div>
               </div>
             </div>
           </div>
@@ -308,7 +321,8 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="./app.js"></script>
 
 </body>
 </html>
+```
